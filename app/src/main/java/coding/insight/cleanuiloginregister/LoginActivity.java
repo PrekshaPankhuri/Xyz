@@ -5,15 +5,18 @@ import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
@@ -22,7 +25,10 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
+
+import java.util.Objects;
 
 
 public class LoginActivity extends AppCompatActivity {
@@ -30,6 +36,7 @@ public class LoginActivity extends AppCompatActivity {
 
     EditText LoginEmail,LoginPassword;
     Button login;
+    DatabaseReference hospitalDatabaseref;
     DatabaseReference userDatabaseRef;
     FirebaseAuth fauth;
     ProgressDialog loader;
@@ -76,44 +83,89 @@ public class LoginActivity extends AppCompatActivity {
                     loader.setMessage("Logging...");
                     loader.setCanceledOnTouchOutside(false);
                     loader.show();
-                    fauth.signInWithEmailAndPassword(email,password).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
+
+                    hospitalDatabaseref = FirebaseDatabase.getInstance().getReference("hospital");
+
+                    Query query = hospitalDatabaseref.orderByChild("Email").equalTo(email);
+                    query.addValueEventListener(new ValueEventListener() {
+                        @RequiresApi(api = Build.VERSION_CODES.N)
                         @Override
-                        public void onComplete(@NonNull Task<AuthResult> task) {
-                            if(!task.isSuccessful()){
-                                Toast.makeText(LoginActivity.this,"Error occured...!",Toast.LENGTH_SHORT).show();
+                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+                            if(snapshot.getValue()==null){
+                                Log.e("Obtained Data","No Data");
+                                SignInwithFirebase(email,password);
                             }
                             else{
-                                String currentUserID=fauth.getCurrentUser().getUid();
-                                userDatabaseRef= FirebaseDatabase.getInstance().getReference("users");
-
-                                userDatabaseRef.get().addOnSuccessListener(new OnSuccessListener<DataSnapshot>() {
-                                    @Override
-                                    public void onSuccess(DataSnapshot dataSnapshot) {
-                                        if(task.isSuccessful()){
-                                            if(dataSnapshot.child(currentUserID).child("type").getValue(String.class).equals("user")){
-                                                Toast.makeText(LoginActivity.this,"Logged in.",Toast.LENGTH_SHORT).show();
-                                                startActivity(new Intent(getApplicationContext(),HomeScreen.class));
-                                                c++;
-                                                loader.dismiss();
-                                                finish();
-                                            }
-                                            else if(dataSnapshot.child(currentUserID).child("type").getValue(String.class).equals("admin")){
-                                                Toast.makeText(LoginActivity.this,"Logged in.",Toast.LENGTH_SHORT).show();
-                                                startActivity(new Intent(getApplicationContext(),MainActivity.class));
-                                                c++;
-                                                loader.dismiss();
-                                                finish();
-                                            }
-                                        }
+                                for(DataSnapshot childSnapshot:snapshot.getChildren()){
+                                    Log.e("Obtained Data", Objects.requireNonNull(childSnapshot.getValue()).toString());
+                                    if(!password.equals(Objects.requireNonNull(childSnapshot.child("Password").getValue()).toString()) ) {
+                                        Log.e("Obtained Data", "Password not match");
+                                        SignInwithFirebase(email,password);
                                     }
-                                });
+                                    else{
+                                        String HospitalId = Objects.requireNonNull(childSnapshot.child("ID").getValue()).toString();
+                                        Intent intent = new Intent(LoginActivity.this, HospitalScreen.class);
+                                        intent.putExtra("ID",HospitalId);
+                                        startActivity(intent);
+                                    }
+                                }
+
                             }
+
+
+                        }
+
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError error) {
+
                         }
                     });
+                    //SignInwithFirebase(email,password);
+
                 }
             }
         });
 
+        }
+
+        public void SignInwithFirebase(String email,String password){
+            fauth.signInWithEmailAndPassword(email,password).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
+                @Override
+                public void onComplete(@NonNull Task<AuthResult> task) {
+                    if(!task.isSuccessful()){
+                        Toast.makeText(LoginActivity.this,"Error occured...!",Toast.LENGTH_SHORT).show();
+                    }
+                    else{
+                        String currentUserID=fauth.getCurrentUser().getUid();
+                        userDatabaseRef= FirebaseDatabase.getInstance().getReference("users");
+
+
+
+                        userDatabaseRef.get().addOnSuccessListener(new OnSuccessListener<DataSnapshot>() {
+                            @Override
+                            public void onSuccess(DataSnapshot dataSnapshot) {
+                                if(task.isSuccessful()){
+                                    if(dataSnapshot.child(currentUserID).child("type").getValue(String.class).equals("user")){
+                                        Toast.makeText(LoginActivity.this,"Logged in.",Toast.LENGTH_SHORT).show();
+                                        startActivity(new Intent(getApplicationContext(),HomeScreen.class));
+                                        c++;
+                                        loader.dismiss();
+                                        finish();
+                                    }
+                                    else if(dataSnapshot.child(currentUserID).child("type").getValue(String.class).equals("admin")){
+                                        Toast.makeText(LoginActivity.this,"Logged in.",Toast.LENGTH_SHORT).show();
+                                        startActivity(new Intent(getApplicationContext(),MainActivity.class));
+                                        c++;
+                                        loader.dismiss();
+                                        finish();
+                                    }
+
+                                }
+                            }
+                        });
+                    }
+                }
+            });
         }
 
     public void onLoginClick(View View){

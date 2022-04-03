@@ -22,7 +22,7 @@ import java.util.Objects;
 
 public class HospitalInfoPop extends AppCompatActivity {
     private DatabaseReference mDatabase;
-    String hospitalId= "6l1th3CA5ehtKETxNjbE7Qm5WyZ2";
+    String hospitalId;
     TextView HospitalName;
     EditText mbedit;
     EditText oxedit;
@@ -41,6 +41,7 @@ public class HospitalInfoPop extends AppCompatActivity {
         bbedits = findViewById(R.id.bbedits);
         covidedit = findViewById(R.id.covidedit);
         vacedit = findViewById(R.id.vacedit);
+        hospitalId = getIntent().getStringExtra("ID");
 
         mDatabase = FirebaseDatabase.getInstance().getReference();
 
