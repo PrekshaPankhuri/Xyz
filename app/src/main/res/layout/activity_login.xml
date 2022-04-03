@@ -130,4 +130,10 @@
         android:onClick="onLoginClick"
         android:src="@drawable/ic_add_img" />
 
+    <Button
+        android:id="@+id/Hospital"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Button" />
+
 </RelativeLayout>

@@ -26,6 +26,7 @@ import com.google.firebase.database.ValueEventListener;
 
 
 public class LoginActivity extends AppCompatActivity {
+    Button Hospital;
 
     EditText LoginEmail,LoginPassword;
     Button login;
@@ -43,11 +44,22 @@ public class LoginActivity extends AppCompatActivity {
         }
         setContentView(R.layout.activity_login);
 
+        Hospital = findViewById(R.id.Hospital);
+        Hospital.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(LoginActivity.this, HospitalScreen.class);
+                startActivity(intent);
+            }
+        });
+
         LoginEmail=findViewById(R.id.loginEmail);
         LoginPassword=findViewById(R.id.loginPassword);
         login=findViewById(R.id.cirLoginButton);
                 fauth=FirebaseAuth.getInstance();
         loader=new ProgressDialog(this);
+
+
 
         login.setOnClickListener(new View.OnClickListener() {
             @Override

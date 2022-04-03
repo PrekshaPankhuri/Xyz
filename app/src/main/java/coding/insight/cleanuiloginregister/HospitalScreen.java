@@ -8,11 +8,22 @@ import android.view.View;
 import android.widget.Button;
 
 public class HospitalScreen extends AppCompatActivity {
+    Button hosinfo;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_hospital_screen);
+
+        hosinfo = findViewById(R.id.buttonhosinfo);
+
+        hosinfo.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(HospitalScreen.this, HospitalInfoPop.class);
+                startActivity(intent);
+            }
+        });
 
     }
 }
